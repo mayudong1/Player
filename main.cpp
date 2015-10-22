@@ -3,14 +3,19 @@
 #include "Direct3DPlayer.h"
 
 
-char className[256] = "testClassName";
-char title[256] = "testTitle";
+static char className[256] = "testClassName";
+static char title[256] = "testTitle";
+static char file[256] = "test.yuv";
+static int pic_width = 176;
+static int pic_height = 144;
+static FILE* pFile = NULL;
 
 CDirect3DPlayer* pPlayer = NULL;
 
 
 HWND InitWindow();
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
+int DrawPic();
 
 HWND InitWindow()
 {
@@ -57,14 +62,14 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		if(pPlayer == NULL)
 		{			
 			pPlayer = new CDirect3DPlayer();		
-			pPlayer->Open(hWnd, 100, 100);	
-			SetTimer(hWnd, 1, 100, NULL);
+			pPlayer->Open(hWnd, pic_width, pic_height);	
+			SetTimer(hWnd, 1, 40, NULL);
 		}
 		break;
 	case WM_TIMER:
 		if(pPlayer != NULL)
-		{
-			pPlayer->Draw();
+		{			
+			DrawPic();
 		}
 		break;
 	case WM_PAINT:
@@ -88,7 +93,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 int main()
 {
-	printf("this is a test\n");
+	pFile = fopen("test.yuv", "rb");	
 	HWND hWnd = InitWindow();
 	if(hWnd == NULL)
 	{
@@ -97,9 +102,37 @@ int main()
 
 	MSG msg;
 	while (GetMessage(&msg, NULL, 0, 0))
-	{				
+	{									
 		TranslateMessage(&msg);
-		DispatchMessage(&msg);		
+		DispatchMessage(&msg);					
 	}
+
+	fclose(pFile);
+	return 0;
+}
+
+int DrawPic()
+{
+	if(pFile == NULL || pPlayer == NULL)
+	{
+		return -1;
+	}
+	int yuv_size = pic_width*pic_height*3/2;
+	unsigned char* data = new unsigned char[yuv_size];
+	unsigned char* yuv[3];
+	yuv[0] = data;
+	yuv[1] = data + pic_width*pic_height;
+	yuv[2] = yuv[1] + pic_width*pic_height/4;
+
+	int ret = fread(data, yuv_size, 1, pFile);
+	if(ret > 0)
+	{
+		pPlayer->Draw(yuv);
+	}
+	else
+	{
+		fseek(pFile, 0, SEEK_SET);
+	}	
+	delete[] data;
 	return 0;
 }

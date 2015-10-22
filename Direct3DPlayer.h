@@ -12,7 +12,7 @@ public:
 public:
 	int Open(HWND hWnd, int nWidth, int nHeight);
 	int Close();
-	int Draw();
+	int Draw(unsigned char* yuv[3]);
 private:
 	IDirect3D9* m_pD3D9;
 	IDirect3DDevice9* m_pD3d9Device;

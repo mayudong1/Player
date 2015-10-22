@@ -75,7 +75,7 @@ int CDirect3DPlayer::Close()
 	return 0;
 }
 
-int CDirect3DPlayer::Draw()
+int CDirect3DPlayer::Draw(unsigned char* yuv[3])
 {
 	if(m_pD3d9Device == NULL)
 	{
@@ -94,27 +94,17 @@ int CDirect3DPlayer::Draw()
 	unsigned char* dest[3];
 	dest[0] = (unsigned char*)d3d_rect.pBits;
 	dest[1] = (unsigned char*)d3d_rect.pBits + m_nHeight * d3d_rect.Pitch;
-	dest[2] = (unsigned char*)dest[1] + m_nHeight * d3d_rect.Pitch / 2;
+	dest[2] = (unsigned char*)dest[1] + m_nHeight * d3d_rect.Pitch / 4;
 
-	unsigned char color = rand()%255;
 	for(int i=0;i<m_nHeight;i++)
 	{
-		for(int j=0;j<m_nWidth;j++)
-		{
-			*(dest[0] + (i*d3d_rect.Pitch+j)) = color;
-		}
-	}
-
+		memcpy(dest[0] + (i*d3d_rect.Pitch), yuv[0] + (i*m_nWidth), m_nWidth);
+	}	
 	for(int i=0;i<m_nHeight/2;i++)
 	{
-		for(int j=0;j<m_nWidth/2;j++)
-		{
-			*(dest[1] + (i*d3d_rect.Pitch/2+j)) = 128;
-			*(dest[2] + (i*d3d_rect.Pitch/2+j)) = 128;
-		}
-	}
-
-	
+		memcpy(dest[2] + (i*d3d_rect.Pitch/2), yuv[1] + (i*m_nWidth/2), m_nWidth/2);
+		memcpy(dest[1] + (i*d3d_rect.Pitch/2), yuv[2] + (i*m_nWidth/2), m_nWidth/2);
+	}		
 	m_pD3d9Surface->UnlockRect();
 
 
@@ -126,6 +116,7 @@ int CDirect3DPlayer::Draw()
 	{
 		m_pD3d9Device->StretchRect(m_pD3d9Surface, NULL, pBackSurface, NULL, D3DTEXF_LINEAR);
 	}
+	pBackSurface->Release();
 	m_pD3d9Device->EndScene();
 	m_pD3d9Device->Present(NULL, NULL, NULL, NULL);
 	return 0;
