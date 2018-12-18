@@ -1,138 +1,129 @@
 #include <stdio.h>
-#include <windows.h>
-#include "Direct3DPlayer.h"
+#include <stdlib.h>
+#include <unistd.h>
+#include <iostream>
+#include <thread>
 
-
-static char className[256] = "testClassName";
-static char title[256] = "testTitle";
-static char file[256] = "test.yuv";
-static int pic_width = 176;
-static int pic_height = 144;
-static FILE* pFile = NULL;
-
-CDirect3DPlayer* pPlayer = NULL;
-
-
-HWND InitWindow();
-LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
-int DrawPic();
-
-HWND InitWindow()
+extern "C"
 {
-	WNDCLASSEX wcex;
-
-	wcex.cbSize = sizeof(WNDCLASSEX);
-	wcex.style			= CS_HREDRAW | CS_VREDRAW;
-	wcex.lpfnWndProc	= WndProc;
-	wcex.cbClsExtra		= 0;
-	wcex.cbWndExtra		= 0;
-	wcex.hInstance		= NULL;
-	wcex.hIcon			= NULL;
-	wcex.hCursor		= LoadCursor(NULL, IDC_ARROW);
-	wcex.hbrBackground	= (HBRUSH)(COLOR_WINDOW);
-	wcex.lpszMenuName	= "testMenuName";
-	wcex.lpszClassName	= className;
-	wcex.hIconSm		= NULL;
-
-	RegisterClassEx(&wcex);
-
-	HWND hWnd = CreateWindow(className, title, WS_OVERLAPPEDWINDOW,
-	CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, NULL, NULL, NULL, NULL);
-
-	if (!hWnd)
-	{
-		return NULL;
-	}
-
-	ShowWindow(hWnd, SW_SHOW);
-	UpdateWindow(hWnd);
-
-	return hWnd;
+#include <libavformat/avformat.h>	
+#include <libavutil/mem.h>
 }
 
-LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
-{
-	int wmId, wmEvent;
-	PAINTSTRUCT ps;
-	HDC hdc;
+#define STRIPCOUNT 10
 
-	switch (message)
+int ReadThread(AVFormatContext* context)
+{
+	AVPacket pkt;
+	int count = 0;
+	while(1)
 	{
-	case WM_CREATE:
-		if(pPlayer == NULL)
-		{			
-			pPlayer = new CDirect3DPlayer();		
-			pPlayer->Open(hWnd, pic_width, pic_height);	
-			SetTimer(hWnd, 1, 40, NULL);
-		}
-		break;
-	case WM_TIMER:
-		if(pPlayer != NULL)
-		{			
-			DrawPic();
-		}
-		break;
-	case WM_PAINT:
-		hdc = BeginPaint(hWnd, &ps);		
-		EndPaint(hWnd, &ps);
-		break;
-	case WM_DESTROY:
-		if(pPlayer != NULL)
-		{
-			delete pPlayer;
-			pPlayer = NULL;
-		}
-		PostQuitMessage(0);
-		break;
-	default:
-		return DefWindowProc(hWnd, message, wParam, lParam);
+		int ret = av_read_frame(context, &pkt);
+		if(ret < 0)
+			return -1;
+		printf("pts = %lld\n", pkt.pts);
+		usleep(500000);
 	}
-	return 0;
 }
 
+static void ConvertNalu(unsigned char* data, int length){
+  if(data[0] == 0 && data[1] == 0 && data[2] == 0 && data[3] == 1)
+    return;
+  int index = 0;
+  unsigned char* p = data;
+  while(index < length)
+  {
+    int len = (p[0]<<24) | (p[1]<<16) | (p[2]<<8) | p[3];
+    if(len <= 0)
+      return;
+    // printf("-----len = %d, nalu type = %d\n", len, p[4]&0x1f);
+    p[0] = 0;
+    p[1] = 0;
+    p[2] = 0;
+    p[3] = 1; 
+    p += (4+len);
+    index += (4+len);
+  }
+  
+}
 
 int main()
 {
-	pFile = fopen("test.yuv", "rb");	
-	HWND hWnd = InitWindow();
-	if(hWnd == NULL)
+	int center_index = 5;
+	AVFormatContext* context = NULL;
+	int ret = avformat_open_input(&context, "http://127.0.0.1:8000/dash/henry5k_clip_base.mp4", 0, 0);
+	if(ret != 0)
 	{
+		printf("open failed\n");
+		return -1;
+	}
+	ret = avformat_find_stream_info(context, 0);
+	if(ret != 0)
+	{
+		printf("find stream info failed\n");
 		return -1;
 	}
 
-	MSG msg;
-	while (GetMessage(&msg, NULL, 0, 0))
-	{									
-		TranslateMessage(&msg);
-		DispatchMessage(&msg);					
-	}
+	int count = 0;
 
+	FILE* pFile = fopen("out.h264", "wb");
+	if(pFile == NULL)
+		return -1;
+	unsigned char* extradata = context->streams[0]->codecpar->extradata;
+	int size = context->streams[0]->codecpar->extradata_size;
+////////////////////
+
+#define AV_RB16(x)                          \
+((((const uint8_t*)(x))[0] <<  8) |        \
+((const uint8_t*)(x)) [1])
+
+	uint8_t *sps= NULL, *pps = NULL;
+    uint32_t sps_size = 0, pps_size = 0;
+	sps_size = AV_RB16(extradata + 6);
+    sps  = (uint8_t*)av_malloc(sps_size * sizeof(char));
+    if(sps == NULL)
+    {
+        ret = -1;
+        return -1;
+    }
+    memcpy(sps, extradata + 6 + 2, sps_size);
+    
+    pps_size = AV_RB16(extradata + 6 + 2 + sps_size + 1);
+    pps = (uint8_t*)av_malloc(pps_size * sizeof(char));
+    if(pps == NULL)
+    {
+        ret = -1;
+        return -1;
+    }
+    memcpy(pps, extradata + 6 + 2 + sps_size + 1 + 2, pps_size);
+///////////////////////
+
+    char split[4] = {0, 0, 0, 1};
+    fwrite(split, 4, 1, pFile);
+    fwrite(sps, sps_size, 1, pFile);
+    fwrite(split, 4, 1, pFile);
+    fwrite(pps, pps_size, 1, pFile);
+
+	while(1)
+	{	
+		AVPacket pkt;
+		int ret = av_read_frame(context, &pkt);
+		if(ret < 0)
+			return -1;
+		if(pkt.stream_index != 0)
+			continue;
+
+		// printf("pts = %lld, count = %d, size = %d\n", pkt.pts, count, pkt.size);
+		ConvertNalu(pkt.data, pkt.size);
+		printf("%d: %02x %02x %02x %02x %02x %02x\n", count,
+			pkt.data[4], 
+			pkt.data[5], pkt.data[6], pkt.data[7], pkt.data[8], pkt.data[9]);
+		fwrite(pkt.data, pkt.size, 1, pFile);
+
+		count++;
+		usleep(100000);
+	}
 	fclose(pFile);
-	return 0;
-}
 
-int DrawPic()
-{
-	if(pFile == NULL || pPlayer == NULL)
-	{
-		return -1;
-	}
-	int yuv_size = pic_width*pic_height*3/2;
-	unsigned char* data = new unsigned char[yuv_size];
-	unsigned char* yuv[3];
-	yuv[0] = data;
-	yuv[1] = data + pic_width*pic_height;
-	yuv[2] = yuv[1] + pic_width*pic_height/4;
-
-	int ret = fread(data, yuv_size, 1, pFile);
-	if(ret > 0)
-	{
-		pPlayer->Draw(yuv);
-	}
-	else
-	{
-		fseek(pFile, 0, SEEK_SET);
-	}	
-	delete[] data;
 	return 0;
 }

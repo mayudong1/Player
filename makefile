@@ -1,13 +1,19 @@
-all : main.exe
-	
-main.exe : main.o Direct3DPlayer.o
-	g++ -o main.exe main.o Direct3DPlayer.o -lgdi32 -ld3d9
+CC=g++
+CFLAG=
+LDFLAG=-lavformat -lglfw -framework opengl
+
+player : player.o
+	$(CC) -o a.out player.o $(LDFLAG)
+
+player.o : player.cpp
+	$(CC) -c player.cpp
+
+all : main.o
+	$(CC) -o a.out main.o $(LDFLAG)
 
 main.o : main.cpp
-	g++ -c main.cpp
+	$(CC) -c main.cpp
 
-Direct3DPlayer.o : Direct3DPlayer.cpp
-	g++ -c Direct3DPlayer.cpp
-
-clean : 
-	rm *.exe *.o
+.PHONY: clean
+clean:
+	rm a.out *.o
