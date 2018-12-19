@@ -100,7 +100,7 @@ int main()
     Shader ourShader("shader.vs", "shader.fs");
 
 
-    float radius = 0.5;
+    float radius = 0.9;
     int numSlices = 128;
     int numParallels = numSlices / 2;
     int numVertices = ( numParallels + 1 ) * ( numSlices + 1 );
@@ -123,7 +123,7 @@ int main()
             
             if (texCoords) {
                 int texIndex = ( i * (numSlices + 1) + j ) * 2;
-                texCoords[texIndex + 0] = (float) j / (float) numSlices;
+                texCoords[texIndex + 0] = (float) j / (float) numSlices / 2;
                 texCoords[texIndex + 1] = ((float) i / (float) (numParallels));
             }
         }
