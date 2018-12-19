@@ -24,6 +24,61 @@ void processInput(GLFWwindow *window);
 const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
 
+#define ES_PI  (3.14159265f)
+
+int generateSphere(float radius, int numSlices)
+{
+    int numParallels = numSlices / 2;
+    int numVertices = ( numParallels + 1 ) * ( numSlices + 1 );
+    int numIndices = numParallels * numSlices * 6;
+    float angleStep = (2.0f * ES_PI) / ((float) numSlices);
+    
+    float* vertices = (float*)malloc ( sizeof(float) * 3 * numVertices );
+    float* texCoords = (float*)malloc ( sizeof(float) * 2 * numVertices );
+    short* indices = (short*)malloc ( sizeof(short) * numIndices );
+
+    for (int i = 0; i < numParallels + 1; i++ ) {
+        for (int j = 0; j < numSlices + 1; j++ ) {
+            int vertex = ( i * (numSlices + 1) + j ) * 3;
+            
+            if ( vertices ) {
+                vertices[vertex + 0] = - radius * sinf ( angleStep * (float)i ) * sinf ( angleStep * (float)j );
+                vertices[vertex + 1] = radius * sinf ( ES_PI/2 + angleStep * (float)i );
+                vertices[vertex + 2] = radius * sinf ( angleStep * (float)i ) * cosf ( angleStep * (float)j );
+            }
+            
+            if (texCoords) {
+                int texIndex = ( i * (numSlices + 1) + j ) * 2;
+                texCoords[texIndex + 0] = (float) j / (float) numSlices;
+                texCoords[texIndex + 1] = ((float) i / (float) (numParallels));
+            }
+        }
+    }
+
+    // Generate the indices
+    if ( indices != NULL ) {
+        short* indexBuf = indices;
+        for (int i = 0; i < numParallels ; i++ ) {
+            for (int j = 0; j < numSlices; j++ ) {
+                *indexBuf++ = (short)(i * ( numSlices + 1 ) + j); // a
+                *indexBuf++ = (short)(( i + 1 ) * ( numSlices + 1 ) + j); // b
+                *indexBuf++ = (short)(( i + 1 ) * ( numSlices + 1 ) + ( j + 1 )); // c
+                *indexBuf++ = (short)(i * ( numSlices + 1 ) + j); // a
+                *indexBuf++ = (short)(( i + 1 ) * ( numSlices + 1 ) + ( j + 1 )); // c
+                *indexBuf++ = (short)(i * ( numSlices + 1 ) + ( j + 1 )); // d
+                
+            }
+        }
+        
+    }
+
+    free(indices);
+    free(texCoords);
+    free(vertices);
+    
+    return numIndices;
+}
+
 int main()
 {
     glfwInit();
@@ -44,16 +99,52 @@ int main()
 
     Shader ourShader("shader.vs", "shader.fs");
 
-    float vertices[] = {
-        0.5f, 0.5f, 0.0f,   0.5f, 1.0f,// 右上角
-        0.5f, -0.5f, 0.0f,  0.5f, 0.0f,// 右下角
-        -0.5f, -0.5f, 0.0f, 0.0f, 0.0f,// 左下角
-        -0.5f, 0.5f, 0.0f,   0.0f, 1.0f// 左上角
-    }; 
-    unsigned int indices[] = {
-        0, 1, 3, // 第一个三角形
-        1, 2, 3  // 第二个三角形
-    };
+
+    float radius = 18;
+    int numSlices = 128;
+    int numParallels = numSlices / 2;
+    int numVertices = ( numParallels + 1 ) * ( numSlices + 1 );
+    int numIndices = numParallels * numSlices * 6;
+    float angleStep = (2.0f * ES_PI) / ((float) numSlices);
+    
+    float* vertices = (float*)malloc ( sizeof(float) * 3 * numVertices );
+    float* texCoords = (float*)malloc ( sizeof(float) * 2 * numVertices );
+    short* indices = (short*)malloc ( sizeof(short) * numIndices );
+
+    for (int i = 0; i < numParallels + 1; i++ ) {
+        for (int j = 0; j < numSlices + 1; j++ ) {
+            int vertex = ( i * (numSlices + 1) + j ) * 3;
+            
+            if ( vertices ) {
+                vertices[vertex + 0] = - radius * sinf ( angleStep * (float)i ) * sinf ( angleStep * (float)j );
+                vertices[vertex + 1] = radius * sinf ( ES_PI/2 + angleStep * (float)i );
+                vertices[vertex + 2] = radius * sinf ( angleStep * (float)i ) * cosf ( angleStep * (float)j );
+            }
+            
+            if (texCoords) {
+                int texIndex = ( i * (numSlices + 1) + j ) * 2;
+                texCoords[texIndex + 0] = (float) j / (float) numSlices;
+                texCoords[texIndex + 1] = ((float) i / (float) (numParallels));
+            }
+        }
+    }
+
+    // Generate the indices
+    if ( indices != NULL ) {
+        short* indexBuf = indices;
+        for (int i = 0; i < numParallels ; i++ ) {
+            for (int j = 0; j < numSlices; j++ ) {
+                *indexBuf++ = (short)(i * ( numSlices + 1 ) + j); // a
+                *indexBuf++ = (short)(( i + 1 ) * ( numSlices + 1 ) + j); // b
+                *indexBuf++ = (short)(( i + 1 ) * ( numSlices + 1 ) + ( j + 1 )); // c
+                *indexBuf++ = (short)(i * ( numSlices + 1 ) + j); // a
+                *indexBuf++ = (short)(( i + 1 ) * ( numSlices + 1 ) + ( j + 1 )); // c
+                *indexBuf++ = (short)(i * ( numSlices + 1 ) + ( j + 1 )); // d
+                
+            }
+        }
+        
+    }
 
     unsigned int VAO;
     glGenVertexArrays(1, &VAO);
@@ -61,6 +152,9 @@ int main()
     unsigned int VBO;
     glGenBuffers(1, &VBO);
 
+    unsigned int VBO_texCoords;
+    glGenBuffers(1, &VBO_texCoords);
+    
     unsigned int EBO;
     glGenBuffers(1, &EBO);
 
@@ -68,15 +162,16 @@ int main()
 
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
+
+    glBindBuffer(GL_ARRAY_BUFFER, VBO_texCoords);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(texCoords), texCoords, GL_STATIC_DRAW);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(1);
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
-
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(0);
-
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
-    glEnableVertexAttribArray(1);
 
     unsigned int texture[3];
     glGenTextures(3, texture);
@@ -193,7 +288,7 @@ int main()
         ourShader.setInt("tex_v", 2);
 
         glBindVertexArray(VAO);
-        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+        glDrawElements(GL_TRIANGLES, sizeof(indices)/sizeof(indices[0]), GL_UNSIGNED_INT, 0);
         glfwSwapBuffers(window);
         glfwPollEvents();
 
