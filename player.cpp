@@ -164,7 +164,11 @@ int main()
             }
 
         }
-        
+        if(!got_frame)
+        {
+            std::cout << "not decode image" << std::endl;
+            continue;
+        }
 
         processInput(window);
 
