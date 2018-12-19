@@ -1,6 +1,6 @@
 CC=g++
 CFLAG=
-LDFLAG=-lavformat -lglfw -framework opengl
+LDFLAG=-lavformat -lavcodec -lglfw -framework opengl
 
 player : player.o
 	$(CC) -o a.out player.o $(LDFLAG)

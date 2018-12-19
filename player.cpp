@@ -2,6 +2,15 @@
 #define GLFW_INCLUDE_GLCOREARB
 #include <GLFW/glfw3.h>
 #include <iostream>
+#include <unistd.h>
+
+extern "C"
+{
+#include <libavutil/imgutils.h>
+#include <libavutil/samplefmt.h>
+#include <libavutil/timestamp.h>
+#include <libavformat/avformat.h>
+}
 
 #include "shader.h"
 
@@ -80,20 +89,83 @@ int main()
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     }
     
-
-    FILE* pFile = fopen("test.yuv", "rb");
-    int data_size = pic_width*pic_height*3/2;
-    unsigned char *data = new(std::nothrow) unsigned char[data_size];
-    unsigned char* yuv[3];
-    yuv[0] = data;
-    yuv[1] = data + pic_width*pic_height;
-    yuv[2] = yuv[1] + pic_width*pic_height/4;
-
     glBindBuffer(GL_ARRAY_BUFFER, 0); 
     glBindVertexArray(0); 
 
+    AVFormatContext* context = NULL;
+    int ret = avformat_open_input(&context, "http://127.0.0.1:8000/1.mp4", 0, 0);
+    if(ret != 0)
+    {
+        std::cout << "open url failed" << std::endl;
+        glfwTerminate();
+        return -1;
+    }
+    ret = avformat_find_stream_info(context, 0);
+    if(ret != 0)
+    {
+        std::cout << "find stream info failed" << std::endl;
+        glfwTerminate();
+        return -1;
+    }
+
+    AVStream* st = context->streams[0];
+    AVCodec* dec = avcodec_find_decoder(st->codecpar->codec_id);
+    if(!dec)
+    {
+        std::cout << "can not find codec" << std::endl;
+        return -1;
+    }
+    AVCodecContext* dec_ctx = avcodec_alloc_context3(dec);
+    if(!dec_ctx)
+    {
+        std::cout << "alloc decode context failed" << std::endl;
+        return -1;
+    }
+    ret = avcodec_parameters_to_context(dec_ctx, st->codecpar);
+    if(ret < 0)
+    {
+        std::cout << "avcodec_parameters_to_context failed" << std::endl;
+        return -1;
+    }
+    ret = avcodec_open2(dec_ctx, dec, NULL);
+    if(ret < 0)
+    {
+        std::cout << "open codec failed" << std::endl;
+        return -1;
+    }
+    
+    AVPacket pkt;
+    av_init_packet(&pkt);
+    pkt.data = NULL;
+    pkt.size = 0;
+    int count = 0;
+
+    AVFrame* frame = av_frame_alloc();
+    int got_frame = 0;
+
     while (!glfwWindowShouldClose(window))
     {
+        ret = av_read_frame(context, &pkt);
+        if(ret < 0)
+        {
+            std::cout << "read frame failed" << std::endl;
+            break;
+        }
+        else
+        {
+            if(pkt.stream_index != 0)
+                continue;
+
+            ret = avcodec_decode_video2(dec_ctx, frame, &got_frame, &pkt);
+            if(ret < 0)
+            {
+                std::cout << "decode failed" << std::endl;
+                continue;
+            }
+
+        }
+        
+
         processInput(window);
 
         // glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
@@ -101,35 +173,32 @@ int main()
 
         ourShader.use();
 
-        fread(data, data_size, 1, pFile);
-
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, texture[0]);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, pic_width, pic_height, 0, GL_RED, GL_UNSIGNED_BYTE, yuv[0]);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, frame->linesize[0], frame->height, 0, GL_RED, GL_UNSIGNED_BYTE, frame->data[0]);
         ourShader.setInt("tex_y", 0);
 
         glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_2D, texture[1]);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, pic_width/2, pic_height/2, 0, GL_RED, GL_UNSIGNED_BYTE, yuv[1]);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, frame->linesize[1], frame->height/2, 0, GL_RED, GL_UNSIGNED_BYTE, frame->data[1]);
         ourShader.setInt("tex_u", 1);
 
         glActiveTexture(GL_TEXTURE2);
         glBindTexture(GL_TEXTURE_2D, texture[2]);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, pic_width/2, pic_height/2, 0, GL_RED, GL_UNSIGNED_BYTE, yuv[2]);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, frame->linesize[2], frame->height/2, 0, GL_RED, GL_UNSIGNED_BYTE, frame->data[2]);
         ourShader.setInt("tex_v", 2);
 
         glBindVertexArray(VAO);
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
         glfwSwapBuffers(window);
         glfwPollEvents();
+
+        av_frame_unref(frame);
     }
 
     glDeleteVertexArrays(1, &VAO);
     glDeleteBuffers(1, &VBO);
     glDeleteBuffers(1, &EBO);
-
-    delete[] data;
-    fclose(pFile);
 
     glfwTerminate();
     return 0;
