@@ -100,7 +100,7 @@ int main()
     Shader ourShader("shader.vs", "shader.fs");
 
 
-    float radius = 18;
+    float radius = 0.5;
     int numSlices = 128;
     int numParallels = numSlices / 2;
     int numVertices = ( numParallels + 1 ) * ( numSlices + 1 );
@@ -161,17 +161,17 @@ int main()
     glBindVertexArray(VAO);
 
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 3 * numVertices, vertices, GL_STATIC_DRAW);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
 
     glBindBuffer(GL_ARRAY_BUFFER, VBO_texCoords);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(texCoords), texCoords, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 2 * numVertices, texCoords, GL_STATIC_DRAW);
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(1);
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(short) * numIndices, indices, GL_STATIC_DRAW);
 
     unsigned int texture[3];
     glGenTextures(3, texture);
@@ -288,7 +288,7 @@ int main()
         ourShader.setInt("tex_v", 2);
 
         glBindVertexArray(VAO);
-        glDrawElements(GL_TRIANGLES, sizeof(indices)/sizeof(indices[0]), GL_UNSIGNED_INT, 0);
+        glDrawElements(GL_TRIANGLES, numIndices, GL_UNSIGNED_SHORT, 0);
         glfwSwapBuffers(window);
         glfwPollEvents();
 
