@@ -45,8 +45,8 @@ int main()
     Shader ourShader("shader.vs", "shader.fs");
 
     float vertices[] = {
-        0.5f, 0.5f, 0.0f,   1.0f, 1.0f,// 右上角
-        0.5f, -0.5f, 0.0f,  1.0f, 0.0f,// 右下角
+        0.5f, 0.5f, 0.0f,   0.5f, 1.0f,// 右上角
+        0.5f, -0.5f, 0.0f,  0.5f, 0.0f,// 右下角
         -0.5f, -0.5f, 0.0f, 0.0f, 0.0f,// 左下角
         -0.5f, 0.5f, 0.0f,   0.0f, 1.0f// 左上角
     }; 
@@ -93,7 +93,7 @@ int main()
     glBindVertexArray(0); 
 
     AVFormatContext* context = NULL;
-    int ret = avformat_open_input(&context, "http://127.0.0.1:8000/1.mp4", 0, 0);
+    int ret = avformat_open_input(&context, "http://127.0.0.1:8000/dash/henry5k_clip_base.mp4", 0, 0);
     if(ret != 0)
     {
         std::cout << "open url failed" << std::endl;

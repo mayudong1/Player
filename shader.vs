@@ -6,6 +6,10 @@ out vec2 TexCoord;
 
 void main()
 {
-	gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);
+	mat4 rotateMat = mat4(0, -1, 0, 0,
+						  1, 0, 0, 0,
+						  0, 0, 1, 0,
+						  0, 0, 0, 1);//旋转90度
+	gl_Position = rotateMat*vec4(aPos.x, aPos.y, aPos.z, 1.0);
 	TexCoord = vec2(aTexCoord.x, 1-aTexCoord.y);
 }
