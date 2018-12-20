@@ -26,59 +26,6 @@ const unsigned int SCR_HEIGHT = 600;
 
 #define ES_PI  (3.14159265f)
 
-int generateSphere(float radius, int numSlices)
-{
-    int numParallels = numSlices / 2;
-    int numVertices = ( numParallels + 1 ) * ( numSlices + 1 );
-    int numIndices = numParallels * numSlices * 6;
-    float angleStep = (2.0f * ES_PI) / ((float) numSlices);
-    
-    float* vertices = (float*)malloc ( sizeof(float) * 3 * numVertices );
-    float* texCoords = (float*)malloc ( sizeof(float) * 2 * numVertices );
-    short* indices = (short*)malloc ( sizeof(short) * numIndices );
-
-    for (int i = 0; i < numParallels + 1; i++ ) {
-        for (int j = 0; j < numSlices + 1; j++ ) {
-            int vertex = ( i * (numSlices + 1) + j ) * 3;
-            
-            if ( vertices ) {
-                vertices[vertex + 0] = - radius * sinf ( angleStep * (float)i ) * sinf ( angleStep * (float)j );
-                vertices[vertex + 1] = radius * sinf ( ES_PI/2 + angleStep * (float)i );
-                vertices[vertex + 2] = radius * sinf ( angleStep * (float)i ) * cosf ( angleStep * (float)j );
-            }
-            
-            if (texCoords) {
-                int texIndex = ( i * (numSlices + 1) + j ) * 2;
-                texCoords[texIndex + 0] = (float) j / (float) numSlices;
-                texCoords[texIndex + 1] = ((float) i / (float) (numParallels));
-            }
-        }
-    }
-
-    // Generate the indices
-    if ( indices != NULL ) {
-        short* indexBuf = indices;
-        for (int i = 0; i < numParallels ; i++ ) {
-            for (int j = 0; j < numSlices; j++ ) {
-                *indexBuf++ = (short)(i * ( numSlices + 1 ) + j); // a
-                *indexBuf++ = (short)(( i + 1 ) * ( numSlices + 1 ) + j); // b
-                *indexBuf++ = (short)(( i + 1 ) * ( numSlices + 1 ) + ( j + 1 )); // c
-                *indexBuf++ = (short)(i * ( numSlices + 1 ) + j); // a
-                *indexBuf++ = (short)(( i + 1 ) * ( numSlices + 1 ) + ( j + 1 )); // c
-                *indexBuf++ = (short)(i * ( numSlices + 1 ) + ( j + 1 )); // d
-                
-            }
-        }
-        
-    }
-
-    free(indices);
-    free(texCoords);
-    free(vertices);
-    
-    return numIndices;
-}
-
 int main()
 {
     glfwInit();
@@ -189,6 +136,7 @@ int main()
 
     AVFormatContext* context = NULL;
     int ret = avformat_open_input(&context, "http://127.0.0.1:8000/dash/henry5k_clip_base.mp4", 0, 0);
+    // int ret = avformat_open_input(&context, "http://127.0.0.1:8000/1.mp4", 0, 0);
     if(ret != 0)
     {
         std::cout << "open url failed" << std::endl;
