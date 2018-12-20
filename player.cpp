@@ -1,6 +1,10 @@
 
 #define GLFW_INCLUDE_GLCOREARB
 #include <GLFW/glfw3.h>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+
 #include <iostream>
 #include <unistd.h>
 
@@ -88,10 +92,14 @@ int main()
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     }
+
+    
     
     glBindBuffer(GL_ARRAY_BUFFER, 0); 
     glBindVertexArray(0); 
 
+
+//////////////////////////////////////
     AVFormatContext* context = NULL;
     int ret = avformat_open_input(&context, "http://127.0.0.1:8000/dash/henry5k_clip_base.mp4", 0, 0);
     if(ret != 0)
@@ -176,6 +184,21 @@ int main()
         glClear(GL_COLOR_BUFFER_BIT);
 
         ourShader.use();
+
+        glm::mat4 model = glm::mat4(1.0f);
+        model = glm::rotate(model, glm::radians(-70.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+        int modelLoc = glGetUniformLocation(ourShader.ID, "model");
+        glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+
+        glm::mat4 view = glm::mat4(1.0f);
+        view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
+        int viewMatrix = glGetUniformLocation(ourShader.ID, "view");
+        glUniformMatrix4fv(viewMatrix, 1, GL_FALSE, glm::value_ptr(view));
+
+        glm::mat4 projection = glm::mat4(1.0f);
+        projection = glm::perspective((double)3.14/8, (double)1.0, (double)0.1f, (double)100.0f);
+        int projMatrix = glGetUniformLocation(ourShader.ID, "projection");
+        glUniformMatrix4fv(projMatrix, 1, GL_FALSE, glm::value_ptr(projection));
 
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, texture[0]);
