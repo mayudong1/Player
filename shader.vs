@@ -4,12 +4,12 @@ layout (location = 1) in vec2 aTexCoord;
 
 out vec2 TexCoord;
 
+uniform mat4 model;
+uniform mat4 view;
+uniform mat4 projection;
+
 void main()
 {
-	mat4 rotateMat = mat4(0, -1, 0, 0,
-						  1, 0, 0, 0,
-						  0, 0, 1, 0,
-						  0, 0, 0, 1);//旋转90度
-	gl_Position = rotateMat*vec4(aPos.x, aPos.y, aPos.z, 1.0);
+	gl_Position = projection * view * model * vec4(aPos.x, aPos.y, aPos.z, 1.0);
 	TexCoord = vec2(aTexCoord.x, 1-aTexCoord.y);
 }

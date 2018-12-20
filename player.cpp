@@ -1,6 +1,10 @@
 
 #define GLFW_INCLUDE_GLCOREARB
 #include <GLFW/glfw3.h>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+
 #include <iostream>
 #include <unistd.h>
 
@@ -23,6 +27,8 @@ void processInput(GLFWwindow *window);
 // settings
 const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
+static float degreeX = 0.0f;
+static float degreeY = 0.0f;
 
 #define ES_PI  (3.14159265f)
 
@@ -220,6 +226,23 @@ int main()
 
         ourShader.use();
 
+        glm::mat4 model = glm::mat4(1.0f);
+        model = glm::rotate(model, glm::radians(degreeX), glm::vec3(0.0f, 1.0f, 0.0f));
+        model = glm::rotate(model, glm::radians(degreeY), glm::vec3(1.0f, 0.0f, 0.0f));
+        model = glm::rotate(model, glm::radians(-90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+        int modelLoc = glGetUniformLocation(ourShader.ID, "model");
+        glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+
+        glm::mat4 view = glm::mat4(1.0f);
+        view = glm::translate(view, glm::vec3(0.0f, 0.0f, 0.0f));
+        int viewMatrix = glGetUniformLocation(ourShader.ID, "view");
+        glUniformMatrix4fv(viewMatrix, 1, GL_FALSE, glm::value_ptr(view));
+
+        glm::mat4 projection = glm::mat4(1.0f);
+        projection = glm::perspective((double)3.14/2, (double)1.0, (double)0.1f, (double)100.0f);
+        int projMatrix = glGetUniformLocation(ourShader.ID, "projection");
+        glUniformMatrix4fv(projMatrix, 1, GL_FALSE, glm::value_ptr(projection));
+
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, texture[0]);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, frame->linesize[0], frame->height, 0, GL_RED, GL_UNSIGNED_BYTE, frame->data[0]);
@@ -254,7 +277,25 @@ int main()
 void processInput(GLFWwindow *window)
 {
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+    {
         glfwSetWindowShouldClose(window, true);
+    }
+    else if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS)
+    {
+        degreeX = degreeX - 1.0;
+    }
+    else if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS)
+    {
+        degreeX = degreeX + 1.0;
+    }
+    else if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
+    {
+        degreeY = degreeY - 1.0;
+    }
+    else if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
+    {
+        degreeY = degreeY + 1.0;
+    }
 }
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height)
