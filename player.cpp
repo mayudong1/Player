@@ -22,7 +22,7 @@ static int pic_width = 176;
 static int pic_height = 144;
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
-void processInput(GLFWwindow *window);
+static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
 
 // settings
 const unsigned int SCR_WIDTH = 800;
@@ -49,11 +49,12 @@ int main()
     }
     glfwMakeContextCurrent(window);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+    glfwSetKeyCallback(window, key_callback);
 
     Shader ourShader("shader.vs", "shader.fs");
 
 
-    float radius = 0.9;
+    float radius = 10;
     int numSlices = 128;
     int numParallels = numSlices / 2;
     int numVertices = ( numParallels + 1 ) * ( numSlices + 1 );
@@ -219,7 +220,6 @@ int main()
             continue;
         }
 
-        processInput(window);
 
         // glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
@@ -239,7 +239,8 @@ int main()
         glUniformMatrix4fv(viewMatrix, 1, GL_FALSE, glm::value_ptr(view));
 
         glm::mat4 projection = glm::mat4(1.0f);
-        projection = glm::perspective((double)3.14/2, (double)1.0, (double)0.1f, (double)100.0f);
+        // projection = glm::perspective((double)3.14/1.8, (double)1.0, (double)0.1f, (double)100.0f);
+        projection = glm::frustum((double)-0.5, (double)0.5, (double)-0.5, (double)0.5, (double)0.5, (double)100);
         int projMatrix = glGetUniformLocation(ourShader.ID, "projection");
         glUniformMatrix4fv(projMatrix, 1, GL_FALSE, glm::value_ptr(projection));
 
@@ -274,28 +275,18 @@ int main()
     return 0;
 }
 
-void processInput(GLFWwindow *window)
+static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
-    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
-    {
-        glfwSetWindowShouldClose(window, true);
-    }
-    else if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS)
-    {
+    if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS | GLFW_REPEAT)
+        glfwSetWindowShouldClose(window, GLFW_TRUE);
+    else if (key == GLFW_KEY_LEFT && action == GLFW_PRESS | GLFW_REPEAT)
         degreeX = degreeX - 1.0;
-    }
-    else if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS)
-    {
+    else if (key == GLFW_KEY_RIGHT && action == GLFW_PRESS | GLFW_REPEAT)
         degreeX = degreeX + 1.0;
-    }
-    else if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
-    {
+    else if (key == GLFW_KEY_UP && action == GLFW_PRESS | GLFW_REPEAT)
         degreeY = degreeY - 1.0;
-    }
-    else if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
-    {
+    else if (key == GLFW_KEY_DOWN && action == GLFW_PRESS | GLFW_REPEAT)
         degreeY = degreeY + 1.0;
-    }
 }
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height)
