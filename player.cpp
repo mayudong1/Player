@@ -227,14 +227,16 @@ int main()
         ourShader.use();
 
         glm::mat4 model = glm::mat4(1.0f);
-        model = glm::rotate(model, glm::radians(degreeX), glm::vec3(0.0f, 1.0f, 0.0f));
-        model = glm::rotate(model, glm::radians(degreeY), glm::vec3(1.0f, 0.0f, 0.0f));
+        // model = glm::rotate(model, glm::radians(degreeX), glm::vec3(0.0f, 1.0f, 0.0f));
+        // model = glm::rotate(model, glm::radians(degreeY), glm::vec3(1.0f, 0.0f, 0.0f));
         // model = glm::rotate(model, glm::radians(-180.0f), glm::vec3(0.0f, 0.0f, 1.0f));
         int modelLoc = glGetUniformLocation(ourShader.ID, "model");
         glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
 
         glm::mat4 view = glm::mat4(1.0f);
         view = glm::translate(view, glm::vec3(0.0f, 0.0f, 0.0f));
+        view = glm::rotate(view, glm::radians(degreeX), glm::vec3(0.0f, 1.0f, 0.0f));
+        view = glm::rotate(view, glm::radians(degreeY), glm::vec3(1.0f, 0.0f, 0.0f));
         int viewMatrix = glGetUniformLocation(ourShader.ID, "view");
         glUniformMatrix4fv(viewMatrix, 1, GL_FALSE, glm::value_ptr(view));
 
@@ -277,15 +279,15 @@ int main()
 
 static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
-    if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS | GLFW_REPEAT)
+    if (key == GLFW_KEY_ESCAPE && (action & (GLFW_PRESS | GLFW_REPEAT)))
         glfwSetWindowShouldClose(window, GLFW_TRUE);
-    else if (key == GLFW_KEY_LEFT && action == GLFW_PRESS | GLFW_REPEAT)
+    else if (key == GLFW_KEY_LEFT && (action & (GLFW_PRESS | GLFW_REPEAT)))
         degreeX = degreeX - 1.0;
-    else if (key == GLFW_KEY_RIGHT && action == GLFW_PRESS | GLFW_REPEAT)
+    else if (key == GLFW_KEY_RIGHT && (action & (GLFW_PRESS | GLFW_REPEAT)))
         degreeX = degreeX + 1.0;
-    else if (key == GLFW_KEY_UP && action == GLFW_PRESS | GLFW_REPEAT)
+    else if (key == GLFW_KEY_UP && (action & (GLFW_PRESS | GLFW_REPEAT)))
         degreeY = degreeY - 1.0;
-    else if (key == GLFW_KEY_DOWN && action == GLFW_PRESS | GLFW_REPEAT)
+    else if (key == GLFW_KEY_DOWN && (action & (GLFW_PRESS | GLFW_REPEAT)))
         degreeY = degreeY + 1.0;
 }
 
