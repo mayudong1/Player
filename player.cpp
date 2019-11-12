@@ -17,18 +17,22 @@ extern "C"
 }
 
 #include "shader.h"
-
-static int pic_width = 176;
-static int pic_height = 144;
+#include "camera.h"
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
+static void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 
 // settings
+Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
 const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
 static float degreeX = 0.0f;
 static float degreeY = 0.0f;
+
+float lastX = SCR_WIDTH / 2.0f;
+float lastY = SCR_HEIGHT / 2.0f;
+bool firstMouse = true;
 
 #define ES_PI  (3.14159265f)
 
@@ -50,6 +54,7 @@ int main()
     glfwMakeContextCurrent(window);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
     glfwSetKeyCallback(window, key_callback);
+    glfwSetCursorPosCallback(window, mouse_callback);
 
     Shader ourShader("shader.vs", "shader.fs");
 
@@ -73,12 +78,13 @@ int main()
                 vertices[vertex + 0] = - radius * sinf ( angleStep * (float)i ) * sinf ( angleStep * (float)j );
                 vertices[vertex + 1] = radius * sinf ( ES_PI/2 + angleStep * (float)i );
                 vertices[vertex + 2] = radius * sinf ( angleStep * (float)i ) * cosf ( angleStep * (float)j );
+                std::cout << vertices[vertex + 0] << " " << vertices[vertex + 1] << " " << vertices[vertex + 2] << std::endl;
             }
             
             if (texCoords) {
                 int texIndex = ( i * (numSlices + 1) + j ) * 2;
-                texCoords[texIndex + 1] = (1.0f - ((float) i / (float) (numParallels)));
-                texCoords[texIndex + 0] = (float) j / (float) numSlices;
+                texCoords[texIndex + 0] = 1.0f - (float) j / (float) numSlices;
+                texCoords[texIndex + 1] = ((float) i / (float) (numParallels));
             }
         }
     }
@@ -195,6 +201,7 @@ int main()
     AVFrame* frame = av_frame_alloc();
     int got_frame = 0;
 
+
     while (!glfwWindowShouldClose(window))
     {
         ret = av_read_frame(context, &pkt);
@@ -232,14 +239,13 @@ int main()
         glm::mat4 model = glm::mat4(1.0f);
         // model = glm::rotate(model, glm::radians(degreeX), glm::vec3(0.0f, 1.0f, 0.0f));
         // model = glm::rotate(model, glm::radians(degreeY), glm::vec3(1.0f, 0.0f, 0.0f));
-        model = glm::rotate(model, glm::radians(180.0f), glm::vec3(0.0f, 0.0f, 1.0f));
         int modelLoc = glGetUniformLocation(ourShader.ID, "model");
         glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
 
-        glm::mat4 view = glm::mat4(1.0f);
-        view = glm::translate(view, glm::vec3(0.0f, 0.0f, 0.0f));
-        view = glm::rotate(view, glm::radians(degreeX), glm::vec3(0.0f, 1.0f, 0.0f));
-        view = glm::rotate(view, glm::radians(degreeY), glm::vec3(1.0f, 0.0f, 0.0f));
+        // glm::mat4 view = glm::mat4(1.0f);
+        // view = glm::rotate(view, glm::radians(degreeX), glm::vec3(0.0f, 1.0f, 0.0f));
+        // view = glm::rotate(view, glm::radians(degreeY), glm::vec3(1.0f, 0.0f, 0.0f));
+        glm::mat4 view = camera.GetViewMatrix();
         int viewMatrix = glGetUniformLocation(ourShader.ID, "view");
         glUniformMatrix4fv(viewMatrix, 1, GL_FALSE, glm::value_ptr(view));
 
@@ -285,15 +291,47 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
 {
     if (key == GLFW_KEY_ESCAPE && (action & (GLFW_PRESS | GLFW_REPEAT)))
         glfwSetWindowShouldClose(window, GLFW_TRUE);
+
     else if (key == GLFW_KEY_LEFT && (action & (GLFW_PRESS | GLFW_REPEAT)))
-        degreeX = degreeX - 1.0;
+    {
+        // degreeX = degreeX - 1.0;
+        camera.ProcessMouseMovement(-10.0, 0);
+    }
     else if (key == GLFW_KEY_RIGHT && (action & (GLFW_PRESS | GLFW_REPEAT)))
-        degreeX = degreeX + 1.0;
+    {
+        // degreeX = degreeX + 1.0;
+        camera.ProcessMouseMovement(10.0, 0);
+    }
     else if (key == GLFW_KEY_UP && (action & (GLFW_PRESS | GLFW_REPEAT)))
-        degreeY = degreeY - 1.0;
+    {
+        // degreeY = degreeY - 1.0;
+        camera.ProcessMouseMovement(0, 10.0);
+    }
     else if (key == GLFW_KEY_DOWN && (action & (GLFW_PRESS | GLFW_REPEAT)))
-        degreeY = degreeY + 1.0;
+    {
+        // degreeY = degreeY + 1.0;
+        camera.ProcessMouseMovement(0, -10.0);
+    }
 }
+
+void mouse_callback(GLFWwindow* window, double xpos, double ypos)
+{
+    if (firstMouse)
+    {
+        lastX = xpos;
+        lastY = ypos;
+        firstMouse = false;
+    }
+
+    float xoffset = xpos - lastX;
+    float yoffset = lastY - ypos; // reversed since y-coordinates go from bottom to top
+
+    lastX = xpos;
+    lastY = ypos;
+
+    camera.ProcessMouseMovement(xoffset, yoffset);
+}
+
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 {
