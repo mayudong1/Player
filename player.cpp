@@ -143,7 +143,7 @@ int main()
 
     AVFormatContext* context = NULL;
     // int ret = avformat_open_input(&context, "http://192.168.72.27:8080/live/chenjin.flv", 0, 0);
-    int ret = avformat_open_input(&context, "http://127.0.0.1:8000/out.mp4", 0, 0);
+    int ret = avformat_open_input(&context, "rtmp://192.168.72.27/live/chenjin", 0, 0);
     if(ret != 0)
     {
         std::cout << "open url failed" << std::endl;
