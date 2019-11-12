@@ -77,8 +77,8 @@ int main()
             
             if (texCoords) {
                 int texIndex = ( i * (numSlices + 1) + j ) * 2;
-                texCoords[texIndex + 0] = (1.0f - ((float) i / (float) (numParallels)));
-                texCoords[texIndex + 1] = (float) j / (float) numSlices;
+                texCoords[texIndex + 1] = (1.0f - ((float) i / (float) (numParallels)));
+                texCoords[texIndex + 0] = (float) j / (float) numSlices;
             }
         }
     }
@@ -232,7 +232,7 @@ int main()
         glm::mat4 model = glm::mat4(1.0f);
         // model = glm::rotate(model, glm::radians(degreeX), glm::vec3(0.0f, 1.0f, 0.0f));
         // model = glm::rotate(model, glm::radians(degreeY), glm::vec3(1.0f, 0.0f, 0.0f));
-        // model = glm::rotate(model, glm::radians(-90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+        model = glm::rotate(model, glm::radians(180.0f), glm::vec3(0.0f, 0.0f, 1.0f));
         int modelLoc = glGetUniformLocation(ourShader.ID, "model");
         glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
 
