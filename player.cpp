@@ -199,7 +199,8 @@ int main()
         if(ret < 0)
         {
             std::cout << "read frame failed" << std::endl;
-            break;
+            avformat_seek_file(context, -1, 0, 0, 0, 0);
+            continue;
         }
         else
         {
