@@ -77,7 +77,7 @@ int main()
             
             if (texCoords) {
                 int texIndex = ( i * (numSlices + 1) + j ) * 2;
-                texCoords[texIndex + 0] = (1.0f - ((float) i / (float) (numParallels))) / 2;
+                texCoords[texIndex + 0] = (1.0f - ((float) i / (float) (numParallels)));
                 texCoords[texIndex + 1] = (float) j / (float) numSlices;
             }
         }
@@ -142,8 +142,8 @@ int main()
     glBindVertexArray(0); 
 
     AVFormatContext* context = NULL;
-    int ret = avformat_open_input(&context, "http://127.0.0.1:8000/dash/henry5k_clip_base.mp4", 0, 0);
-    // int ret = avformat_open_input(&context, "http://127.0.0.1:8000/1.mp4", 0, 0);
+    // int ret = avformat_open_input(&context, "http://192.168.72.27:8080/live/chenjin.flv", 0, 0);
+    int ret = avformat_open_input(&context, "http://127.0.0.1:8000/out.mp4", 0, 0);
     if(ret != 0)
     {
         std::cout << "open url failed" << std::endl;
@@ -229,7 +229,7 @@ int main()
         glm::mat4 model = glm::mat4(1.0f);
         // model = glm::rotate(model, glm::radians(degreeX), glm::vec3(0.0f, 1.0f, 0.0f));
         // model = glm::rotate(model, glm::radians(degreeY), glm::vec3(1.0f, 0.0f, 0.0f));
-        // model = glm::rotate(model, glm::radians(-180.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+        // model = glm::rotate(model, glm::radians(-90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
         int modelLoc = glGetUniformLocation(ourShader.ID, "model");
         glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
 
@@ -267,6 +267,7 @@ int main()
         glfwPollEvents();
 
         av_frame_unref(frame);
+        usleep(30*1000);
     }
 
     glDeleteVertexArrays(1, &VAO);
