@@ -78,7 +78,6 @@ int main()
                 vertices[vertex + 0] = - radius * sinf ( angleStep * (float)i ) * sinf ( angleStep * (float)j );
                 vertices[vertex + 1] = radius * sinf ( ES_PI/2 + angleStep * (float)i );
                 vertices[vertex + 2] = radius * sinf ( angleStep * (float)i ) * cosf ( angleStep * (float)j );
-                std::cout << vertices[vertex + 0] << " " << vertices[vertex + 1] << " " << vertices[vertex + 2] << std::endl;
             }
             
             if (texCoords) {
