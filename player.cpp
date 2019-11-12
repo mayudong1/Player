@@ -158,7 +158,9 @@ int main()
         return -1;
     }
 
-    AVStream* st = context->streams[0];
+    int video_index = av_find_best_stream(context, AVMEDIA_TYPE_VIDEO, -1, -1, NULL, 0);
+
+    AVStream* st = context->streams[video_index];
     AVCodec* dec = avcodec_find_decoder(st->codecpar->codec_id);
     if(!dec)
     {
@@ -204,7 +206,7 @@ int main()
         }
         else
         {
-            if(pkt.stream_index != 0)
+            if(pkt.stream_index != video_index)
                 continue;
 
             ret = avcodec_decode_video2(dec_ctx, frame, &got_frame, &pkt);
