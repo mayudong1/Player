@@ -36,8 +36,12 @@ bool firstMouse = true;
 
 #define ES_PI  (3.14159265f)
 
-int main()
+int main(int argc, char** argv)
 {
+    if(argc < 2){
+        printf("need input\n");
+        return 0;
+    }
     glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
@@ -148,7 +152,7 @@ int main()
 
     AVFormatContext* context = NULL;
     // int ret = avformat_open_input(&context, "http://192.168.72.27:8080/live/chenjin.flv", 0, 0);
-    int ret = avformat_open_input(&context, "rtmp://192.168.72.27/live/chenjin", 0, 0);
+    int ret = avformat_open_input(&context, argv[1], 0, 0);
     if(ret != 0)
     {
         std::cout << "open url failed" << std::endl;
@@ -315,6 +319,13 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
 
 void mouse_callback(GLFWwindow* window, double xpos, double ypos)
 {
+    int state = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT);
+    if (state != GLFW_PRESS)
+    {
+        firstMouse = true;
+        return;
+    }
+
     if (firstMouse)
     {
         lastX = xpos;
@@ -322,8 +333,8 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos)
         firstMouse = false;
     }
 
-    float xoffset = xpos - lastX;
-    float yoffset = lastY - ypos; // reversed since y-coordinates go from bottom to top
+    float xoffset = lastX-xpos;
+    float yoffset = ypos - lastY;
 
     lastX = xpos;
     lastY = ypos;
